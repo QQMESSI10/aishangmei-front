@@ -4,18 +4,20 @@
       <div class="logo">
         <img class="logo-image" :src="require('@/assets/logo.png')" />
       </div>
-      <el-form :model="loginForm" class="form">
-        <el-form-item>
+      <el-form ref="loginForm" :model="loginForm" :rules="rules" class="form">
+        <el-form-item prop="account">
           <el-input
             v-model="loginForm.account"
             placeholder="请输入账号"
+            maxlength="20"
           ></el-input>
         </el-form-item>
-        <el-form-item>
+        <el-form-item prop="password">
           <el-input
             v-model="loginForm.password"
             placeholder="请输入密码"
             type="password"
+            maxlength="20"
           ></el-input>
         </el-form-item>
         <el-form-item>
@@ -29,6 +31,7 @@
 </template>
 
 <script>
+import bcryptjs from "bcryptjs";
 export default {
   data() {
     return {
@@ -36,11 +39,26 @@ export default {
         account: "",
         password: "",
       },
+      rules: {
+        account: [{ required: true, message: "请输入账号", trigger: "blur" }],
+        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+      },
     };
   },
   methods: {
     onSubmit() {
-      console.log(this.loginForm);
+      const password = bcryptjs.hashSync(this.loginForm.password, 10);
+      this.$refs.loginForm.validate((valid) => {
+        if (valid) {
+          this.$api
+            .post("/login", { account: this.loginForm.account, password })
+            .then((res) => {
+              console.log(res);
+            });
+        } else {
+          return false;
+        }
+      });
     },
   },
 };

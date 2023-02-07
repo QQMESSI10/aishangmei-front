@@ -10,6 +10,9 @@ Vue.config.productionTip = false;
 
 Vue.use(ElementUI);
 
+import api from "@/api/index.js";
+Vue.prototype.$api = api;
+
 new Vue({
   router,
   store,
