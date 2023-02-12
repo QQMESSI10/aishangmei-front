@@ -13,6 +13,10 @@ Vue.use(ElementUI);
 import api from "@/api/index.js";
 Vue.prototype.$api = api;
 
+// 错误处理
+import { errHandle } from "./utils/utils";
+Vue.prototype.$errHandle = errHandle;
+
 new Vue({
   router,
   store,

@@ -21,7 +21,11 @@
           ></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button class="btn" type="primary" @click="onSubmit"
+          <el-button
+            class="btn"
+            type="primary"
+            @click="onSubmit"
+            :loading="btnLoading"
             >登 录</el-button
           >
         </el-form-item>
@@ -31,7 +35,8 @@
 </template>
 
 <script>
-import bcryptjs from "bcryptjs";
+// import bcryptjs from "bcryptjs";
+import { setToken } from "../../utils/user.js";
 export default {
   data() {
     return {
@@ -43,22 +48,46 @@ export default {
         account: [{ required: true, message: "请输入账号", trigger: "blur" }],
         password: [{ required: true, message: "请输入密码", trigger: "blur" }],
       },
+      btnLoading: false,
     };
   },
   methods: {
     onSubmit() {
-      const password = bcryptjs.hashSync(this.loginForm.password, 10);
+      this.btnLoading = true;
+      // const password = bcryptjs.hashSync(this.loginForm.password);
       this.$refs.loginForm.validate((valid) => {
         if (valid) {
           this.$api
-            .post("/login", { account: this.loginForm.account, password })
+            .post("admin/login", this.loginForm)
             .then((res) => {
-              console.log(res);
-            });
+              if (res.status == 1) {
+                const nowDate = new Date();
+                const year = nowDate.getFullYear();
+                const month = nowDate.getMonth() + 1;
+                const date = nowDate.getDate();
+                this.$message.success(
+                  `${year}年${month}月${date}日，欢迎登录爱尚美美业登记系统`
+                );
+                setToken(this.createToken());
+                this.$router.replace("/");
+              }
+            })
+            .finally(() => (this.btnLoading = false));
         } else {
+          this.btnLoading = false;
           return false;
         }
       });
+    },
+    createToken() {
+      const account = this.loginForm.account;
+      let tokenTop = "";
+      for (let e of account) {
+        const random = Math.floor(Math.random() * 10);
+        tokenTop = tokenTop + random + e;
+      }
+      console.log(tokenTop + String(new Date().getTime()));
+      return tokenTop + String(new Date().getTime());
     },
   },
 };

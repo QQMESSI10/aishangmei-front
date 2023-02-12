@@ -18,4 +18,10 @@
   text-align: center;
   color: #2c3e50;
 }
+.el-scrollbar .el-scrollbar__bar {
+  opacity: 1 !important;
+}
+.margin-right20 {
+  margin-right: 20px;
+}
 </style>

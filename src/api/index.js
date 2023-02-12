@@ -1,7 +1,8 @@
-import axios from "axios"; //引入
+import axios from "axios";
 import { Message } from "element-ui";
 import { getToken } from "../utils/user.js";
-let baseURL = "http://localhost:8888/admin";
+import { errHandle } from "../utils/utils";
+let baseURL = "http://192.168.28.7:8888/";
 
 let config = {
   baseURL: baseURL,
@@ -32,14 +33,14 @@ _axios.interceptors.response.use(
     // if (res.data.code === 404 ) {
     //    Toast("请求网络失败")
     // }
-    if (res.data.messageCode != "200") {
+    if (res.data.status == 0) {
       Message.error(res.data.message);
     }
     return res;
   },
   (err) => {
     if (err) {
-      Message.error("未知原因错误");
+      errHandle(err);
     }
     return Promise.reject(err);
   }
