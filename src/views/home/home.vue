@@ -28,7 +28,9 @@
         >
       </div>
       <div class="box">
-        <el-button type="warning" plain class="box-btn">会员查询</el-button>
+        <el-button type="warning" plain class="box-btn" @click="toPage('user')"
+          >会员查询</el-button
+        >
         <!-- <el-link type="warning" class="history">历史记录</el-link> -->
       </div>
       <div class="box">
@@ -73,7 +75,7 @@ export default {
 
 <style lang="scss" scoped>
 .page {
-  height: 100vh;
+  min-height: 100vh;
   padding: 80px 50px 80px 50px;
   display: flex;
   flex-direction: column;

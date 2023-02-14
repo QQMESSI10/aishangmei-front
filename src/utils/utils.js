@@ -3,7 +3,7 @@ import axios from "axios";
 export function errHandle(err) {
   Message.error("未知原因错误，请联系管理员处理！");
   console.log(err);
-  axios.post("http://192.168.28.7:8888/front/error", { err });
+  axios.post("http://localhost:8888/front/error", { err });
 }
 
 export function getDate() {

@@ -2,7 +2,7 @@ import axios from "axios";
 import { Message } from "element-ui";
 import { getToken } from "../utils/user.js";
 import { errHandle } from "../utils/utils";
-let baseURL = "http://192.168.28.7:8888/";
+let baseURL = "http://localhost:8888/";
 
 let config = {
   baseURL: baseURL,
