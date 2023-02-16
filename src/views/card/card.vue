@@ -17,7 +17,8 @@
       <el-form
         ref="form"
         :model="form"
-        label-width="90px"
+        :rules="rules"
+        label-width="100px"
         class="form"
         v-loading="loading"
       >
@@ -53,10 +54,10 @@
             </el-col> -->
           </el-col>
         </el-row>
-        <el-form-item label="充卡类型：">
+        <el-form-item label="充卡类型：" prop="card">
           <el-row>
             <el-col :span="12">
-              <el-select v-model="form.cardType" placeholder="请选择">
+              <el-select v-model="form.card" placeholder="请选择">
                 <el-option
                   v-for="item in cardTypeList"
                   :key="item.id"
@@ -68,7 +69,7 @@
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item label="充值金额：">
+        <el-form-item label="充值金额：" prop="money">
           <el-row>
             <el-col :span="12">
               <el-input v-model="form.money" type="number">
@@ -76,12 +77,12 @@
               </el-input>
             </el-col>
             <el-col :span="12">
-              <span>充值后卡内余额：9999元</span>
+              <!-- <span>充值后卡内余额：9999元</span> -->
             </el-col>
           </el-row>
         </el-form-item>
         <el-form-item label="赠送服务：">
-          <el-row v-for="(item, index) in form.giftArr" :key="index">
+          <el-row v-for="(item, index) in form.projectArr" :key="index">
             <el-col :span="16" class="gift-col">
               <el-select v-model="item.projectId" placeholder="请选择">
                 <el-option
@@ -98,8 +99,12 @@
         </el-form-item>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="服务人：">
-              <el-select v-model="form.server" filterable placeholder="请选择">
+            <el-form-item label="服务人：" prop="serverId">
+              <el-select
+                v-model="form.serverId"
+                filterable
+                placeholder="请选择"
+              >
                 <el-option
                   v-for="item in serverList"
                   :key="item.id"
@@ -121,7 +126,9 @@
           ></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submit">提交</el-button>
+          <el-button type="primary" @click="submit" v-loading="btnLoading"
+            >提交</el-button
+          >
           <el-button class="btn-cancel" @click="cancelPage">取消</el-button>
         </el-form-item>
       </el-form>
@@ -140,8 +147,11 @@ export default {
       date: "",
       form: {
         date: "",
+        user: "",
         telephone: "",
-        giftArr: [{ projectId: "" }],
+        card: "",
+        serverId: "",
+        projectArr: [{ projectId: "" }],
       },
       userList: [],
       cardTypeList: [],
@@ -149,6 +159,19 @@ export default {
       serverList: [],
       addUserVisible: false,
       loading: false,
+      btnLoading: false,
+      rules: {
+        user: [{ required: true, message: "请选择会员", trigger: "change" }],
+        card: [
+          { required: true, message: "请选择充卡类型", trigger: "change" },
+        ],
+        money: [
+          { required: true, message: "请输入充值金额", trigger: "change" },
+        ],
+        serverId: [
+          { required: true, message: "请选择服务人", trigger: "change" },
+        ],
+      },
       reg: /^(\d{3})\d{4}(\d{4})$/,
     };
   },
@@ -161,10 +184,41 @@ export default {
   },
   methods: {
     submit() {
-      console.log(this.form);
+      this.btnLoading = true;
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true;
+          // eslint-disable-next-line no-unused-vars
+          const { telephone, projectArr, ...info } = this.form;
+          const arr = [...projectArr];
+          let projectData = [];
+          arr.forEach((e) => {
+            projectData.push(e.projectId);
+          });
+          this.$api
+            .post("card/recharge", { projectData, ...info })
+            .then((res) => {
+              if (res.status == 1) {
+                this.$notify.success({
+                  title: "成功",
+                  message: "充卡登记表提交成功！",
+                });
+                this.$router.replace("/");
+              }
+            })
+            .finally(() => {
+              this.btnLoading = false;
+              this.loading = false;
+            });
+        } else {
+          this.$message.error("请正确填写登记表信息后提交");
+          this.btnLoading = false;
+          return false;
+        }
+      });
     },
     addGift() {
-      this.form.giftArr.push({ projectId: "" });
+      this.form.projectArr.push({ projectId: "" });
     },
     getUser() {
       this.$api.post("user/list").then((res) => {
