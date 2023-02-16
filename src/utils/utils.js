@@ -6,15 +6,20 @@ export function errHandle(err) {
   axios.post("http://localhost:8888/front/error", { err });
 }
 
+function dateTransform(val) {
+  return val < 10 ? "0" + val : val;
+}
 export function getDate() {
   const nowDate = new Date();
   const year = nowDate.getFullYear();
   const month = nowDate.getMonth() + 1;
   const date = nowDate.getDate();
   const hour = nowDate.getHours();
-  const minutes =
-    nowDate.getMinutes() < 10
-      ? "0" + nowDate.getMinutes()
-      : nowDate.getMinutes();
-  return `${year}-${month}-${date} ${hour}:${minutes}`;
+  const minutes = nowDate.getMinutes();
+  const seconds = nowDate.getSeconds();
+  return `${year}-${dateTransform(month)}-${dateTransform(
+    date
+  )} ${dateTransform(hour)}:${dateTransform(minutes)}:${dateTransform(
+    seconds
+  )}`;
 }

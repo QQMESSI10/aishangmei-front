@@ -10,9 +10,9 @@
   >
     <el-option
       v-for="item in userList"
-      :key="item.value"
+      :key="item.id"
       :label="item.label"
-      :value="item.value"
+      :value="item.id"
     >
     </el-option>
   </el-select>
@@ -21,9 +21,28 @@
 <script>
 export default {
   props: ["userList", "form"],
+  data() {
+    return {
+      list: [],
+      reg: /^(\d{3})\d{4}(\d{4})$/,
+    };
+  },
+  watch: {
+    userList: {
+      handler(newVal) {
+        this.list = newVal.map((m) => {
+          const telephone = m.telephone;
+          m.label =
+            m.name + "（" + telephone.replace(this.reg, "$1****$2") + "）";
+        });
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
   methods: {
-    selectChange(info) {
-      console.log(info);
+    selectChange(id) {
+      const info = this.userList.find((f) => f.id == id);
       this.$emit("userChange", info);
     },
     cancalReadOnly(onOff) {

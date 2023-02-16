@@ -27,9 +27,11 @@
         </el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="warning">查询</el-button>
-        <el-button>重置</el-button>
-        <el-button type="warning" class="btn-add">新增会员</el-button>
+        <el-button type="warning" @click="search">查询</el-button>
+        <el-button @click="searchFormReset">重置</el-button>
+        <el-button type="warning" class="btn-add" @click="addUserVisible = true"
+          >新增会员</el-button
+        >
       </el-form-item>
     </el-form>
     <el-table
@@ -37,6 +39,7 @@
       border
       stripe
       style="width: 100%; overflow-y: auto"
+      v-loading="tableLoading"
     >
       <el-table-column prop="name" label="姓名" width="120"> </el-table-column>
       <el-table-column prop="telephone" label="手机号" width="150">
@@ -74,7 +77,12 @@
             @click="toDetail(scope)"
             >消费记录</el-link
           >
-          <el-link class="margin-right20" type="warning">修改信息</el-link>
+          <el-link
+            class="margin-right20"
+            type="warning"
+            @click="editInfo(scope.row)"
+            >修改信息</el-link
+          >
         </template>
       </el-table-column>
     </el-table>
@@ -92,6 +100,13 @@
     <el-button type="warning" plain class="btn-home" @click="goBack"
       >返回主菜单</el-button
     >
+    <add-user
+      :visible="addUserVisible"
+      :userInfo="currentUser"
+      :type="addUserType"
+      @close="addUserVisible = false"
+      @refresh="search"
+    ></add-user>
     <el-dialog
       title="王木木 - 持卡详情"
       :visible.sync="cardVisible"
@@ -162,97 +177,19 @@
 </template>
 
 <script>
+import addUser from "../components/addUser.vue";
 export default {
+  components: { addUser },
   data() {
     return {
       searchForm: {
         name: "",
-        telphone: "",
+        telephone: "",
         birthday: "",
       },
-      tableData: [
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          birthday: "2023-2-12",
-        },
-      ],
-      total: 100,
+      tableData: [],
+      tableLoading: false,
+      total: 0,
       currentPage: 1,
       cardVisible: false,
       cardData: [
@@ -273,11 +210,54 @@ export default {
       ],
       projectVisible: false,
       projectData: [{ project: "价值99元美甲" }],
+      addUserVisible: false,
+      addUserType: "add",
+      currentUser: null,
     };
+  },
+  created() {
+    this.getTableData();
   },
   methods: {
     showCard() {
       this.cardVisible = true;
+    },
+    getTableData() {
+      this.tableLoading = true;
+      this.$api
+        .post("user/list", {
+          ...this.searchForm,
+          offset: (this.currentPage - 1) * 10,
+          limit: 10,
+        })
+        .then((res) => {
+          if (res.status == 1) {
+            console.log(res);
+            this.tableData = res.data.list;
+            this.total = res.data.total;
+          } else {
+            this.tableData = [];
+            this.total = 0;
+          }
+        })
+        .finally(() => (this.tableLoading = false));
+    },
+    search() {
+      this.currentPage = 1;
+      this.getTableData();
+    },
+    editInfo(user) {
+      this.addUserType = "update";
+      this.currentUser = Object.assign({}, user);
+      this.addUserVisible = true;
+    },
+    searchFormReset() {
+      this.searchForm = {
+        name: "",
+        telephone: "",
+        birthday: "",
+      };
+      this.search();
     },
     cardDetail() {},
     showProject() {

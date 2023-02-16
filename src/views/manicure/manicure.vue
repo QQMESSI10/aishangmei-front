@@ -5,7 +5,15 @@
         <img class="logo" :src="require('@/assets/logo.png')" />
         <p class="top-title">爱尚美消费登记单</p>
       </div>
-      <div class="date">{{ date }}</div>
+      <div class="date">
+        <el-date-picker
+          v-model="form.date"
+          type="datetime"
+          placeholder="选择日期时间"
+          value-format="yyyy-MM-dd hh:mm:ss"
+        >
+        </el-date-picker>
+      </div>
       <el-form ref="form" :model="form" label-width="90px" class="form">
         <el-row>
           <el-col :span="10">
@@ -21,6 +29,10 @@
             <el-button type="text" @click="addUserVisible = true"
               >添加会员</el-button
             >
+            <add-user
+              :visible="addUserVisible"
+              @close="addUserVisible = false"
+            ></add-user>
           </el-col>
           <el-col :span="12">
             <el-col :span="24">
@@ -128,6 +140,8 @@
           <el-input
             type="textarea"
             v-model="form.remark"
+            maxlength="80"
+            show-word-limit
             :autosize="{ minRows: 4 }"
           ></el-input>
         </el-form-item>
@@ -143,8 +157,9 @@
 <script>
 import { getDate } from "../../utils/utils";
 import selectUser from "../components/selectUser.vue";
+import addUser from "../components/addUser.vue";
 export default {
-  components: { selectUser },
+  components: { selectUser, addUser },
   data() {
     return {
       form: {
@@ -200,10 +215,11 @@ export default {
           payArr: [{ type: "" }],
         },
       ],
+      addUserVisible: false,
     };
   },
   created() {
-    this.date = getDate();
+    this.form.date = getDate();
   },
   methods: {
     addProject() {

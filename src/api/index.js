@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Message } from "element-ui";
+import { Notification } from "element-ui";
 import { getToken } from "../utils/user.js";
 import { errHandle } from "../utils/utils";
 let baseURL = "http://localhost:8888/";
@@ -34,7 +34,7 @@ _axios.interceptors.response.use(
     //    Toast("请求网络失败")
     // }
     if (res.data.status == 0) {
-      Message.error(res.data.message);
+      Notification.error({ title: "出错啦", message: res.data.message });
     }
     return res;
   },
