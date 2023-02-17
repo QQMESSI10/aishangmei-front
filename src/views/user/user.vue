@@ -232,7 +232,6 @@ export default {
         })
         .then((res) => {
           if (res.status == 1) {
-            console.log(res);
             this.tableData = res.data.list;
             this.total = res.data.total;
           } else {

@@ -34,8 +34,8 @@
         </el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-button type="success">查询</el-button>
-        <el-button>重置</el-button>
+        <el-button type="success" @click="search">查询</el-button>
+        <el-button @click="formReset">重置</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -43,11 +43,12 @@
       border
       stripe
       style="width: 100%; overflow-y: auto"
+      v-loading="tableLoading"
     >
-      <el-table-column prop="name" label="姓名" width="100"> </el-table-column>
+      <el-table-column prop="user" label="姓名" width="100"> </el-table-column>
       <el-table-column prop="telephone" label="手机号" width="130">
       </el-table-column>
-      <el-table-column prop="project" label="充卡类型"></el-table-column>
+      <el-table-column prop="card" label="充卡类型"></el-table-column>
       <el-table-column
         prop="money"
         label="充卡金额"
@@ -183,9 +184,46 @@ export default {
       ],
       total: 100,
       currentPage: 1,
+      tableLoading: false,
     };
   },
+  created() {
+    this.search();
+  },
   methods: {
+    getTableData() {
+      this.tableLoading = true;
+      this.$api
+        .post("card/recharge/list", {
+          ...this.searchForm,
+          offset: (this.currentPage - 1) * 10,
+          limit: 10,
+        })
+        .then((res) => {
+          if (res.status == 1) {
+            console.log(res);
+            this.tableData = res.data.list;
+            this.total = res.data.total;
+          } else {
+            this.tableData = [];
+            this.total = 0;
+          }
+        })
+        .finally(() => (this.tableLoading = false));
+    },
+    search() {
+      this.currentPage = 1;
+      this.getTableData();
+    },
+    formReset() {
+      this.searchForm = {
+        name: "",
+        telphone: "",
+        server: "",
+        date: "",
+      };
+      this.search();
+    },
     handleSizeChange() {},
     handleCurrentChange() {},
     goBack() {
