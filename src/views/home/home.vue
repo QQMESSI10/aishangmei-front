@@ -58,7 +58,9 @@ export default {
         .then(() => {
           this.$router.replace("/login");
         })
-        .catch();
+        .catch(() => {
+          return false;
+        });
     },
     toPage(page) {
       this.$router.push("/" + page);

@@ -263,7 +263,10 @@ export default {
       this.projectVisible = true;
     },
     handleSizeChange() {},
-    handleCurrentChange() {},
+    handleCurrentChange(current) {
+      this.currentPage = current;
+      this.getTableData();
+    },
     goBack() {
       history.go(-1);
     },

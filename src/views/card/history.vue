@@ -29,6 +29,7 @@
           v-model="searchForm.date"
           type="date"
           placeholder="选择日期"
+          value-format="yyyy-MM-dd"
           @focus="forbid"
         >
         </el-date-picker>
@@ -45,22 +46,22 @@
       style="width: 100%; overflow-y: auto"
       v-loading="tableLoading"
     >
-      <el-table-column prop="user" label="姓名" width="100"> </el-table-column>
-      <el-table-column prop="telephone" label="手机号" width="130">
+      <el-table-column prop="user" label="姓名" width="90"> </el-table-column>
+      <el-table-column prop="telephone" label="手机号" width="120">
       </el-table-column>
       <el-table-column prop="card" label="充卡类型"></el-table-column>
       <el-table-column
         prop="money"
         label="充卡金额"
-        width="100"
+        width="90"
       ></el-table-column>
       <el-table-column
         prop="server"
         label="服务人"
-        width="100"
+        width="90"
       ></el-table-column>
-      <el-table-column prop="date" label="日期" width="150"></el-table-column>
-      <el-table-column label="操作" width="180">
+      <el-table-column prop="date" label="日期" width="170"></el-table-column>
+      <el-table-column label="操作" width="170">
         <template slot-scope="scope">
           <el-link
             class="margin-right20"
@@ -212,6 +213,7 @@ export default {
         .finally(() => (this.tableLoading = false));
     },
     search() {
+      this.total = 0;
       this.currentPage = 1;
       this.getTableData();
     },
@@ -225,7 +227,10 @@ export default {
       this.search();
     },
     handleSizeChange() {},
-    handleCurrentChange() {},
+    handleCurrentChange(current) {
+      this.currentPage = current;
+      this.getTableData();
+    },
     goBack() {
       history.go(-1);
     },
