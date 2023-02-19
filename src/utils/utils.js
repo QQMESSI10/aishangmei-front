@@ -23,3 +23,23 @@ export function getDate() {
     seconds
   )}`;
 }
+
+// 清除keep-alive缓存
+export function removeKeepAliveCacheForVueInstance(vueInstance) {
+  let key =
+    vueInstance.$vnode.key ??
+    vueInstance.$vnode.componentOptions.Ctor.cid +
+      (vueInstance.$vnode.componentOptions.tag
+        ? `::${vueInstance.$vnode.componentOptions.tag}`
+        : "");
+  let cache = vueInstance.$vnode.parent.componentInstance.cache;
+  let keys = vueInstance.$vnode.parent.componentInstance.keys;
+  if (cache[key]) {
+    vueInstance.$destroy();
+    delete cache[key];
+    let index = keys.indexOf(key);
+    if (index > -1) {
+      keys.splice(index, 1);
+    }
+  }
+}

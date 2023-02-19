@@ -11,6 +11,8 @@
           type="datetime"
           placeholder="选择日期时间"
           value-format="yyyy-MM-dd hh:mm:ss"
+          :disabled="type == 'read'"
+          v-loading="loading"
         >
         </el-date-picker>
       </div>
@@ -29,11 +31,12 @@
                 ref="user"
                 :userList="userList"
                 :form="form"
+                :disabled="!!type"
                 @userChange="userChange"
               ></select-user>
             </el-form-item>
           </el-col>
-          <el-col :span="2">
+          <el-col :span="2" v-if="type == ''">
             <el-button type="text" @click="addUserVisible = true"
               >添加会员</el-button
             >
@@ -57,7 +60,11 @@
         <el-form-item label="充卡类型：" prop="card">
           <el-row>
             <el-col :span="12">
-              <el-select v-model="form.card" placeholder="请选择">
+              <el-select
+                v-model="form.card"
+                placeholder="请选择"
+                :disabled="!!type"
+              >
                 <el-option
                   v-for="item in cardTypeList"
                   :key="item.id"
@@ -72,7 +79,12 @@
         <el-form-item label="充值金额：" prop="money">
           <el-row>
             <el-col :span="12">
-              <el-input v-model="form.money" type="number">
+              <el-input
+                v-model="form.money"
+                type="number"
+                :disabled="!!type"
+                placeholder="请输入"
+              >
                 <template slot="append">元</template>
               </el-input>
             </el-col>
@@ -82,9 +94,16 @@
           </el-row>
         </el-form-item>
         <el-form-item label="赠送服务：">
+          <el-row v-if="form.projectArr.length == 0">
+            <el-col :span="16">无赠送服务</el-col>
+          </el-row>
           <el-row v-for="(item, index) in form.projectArr" :key="index">
             <el-col :span="16" class="gift-col">
-              <el-select v-model="item.projectId" placeholder="请选择">
+              <el-select
+                v-model="item.projectId"
+                placeholder="请选择"
+                :disabled="!!type"
+              >
                 <el-option
                   v-for="item in projectList"
                   :key="item.id"
@@ -95,7 +114,9 @@
               </el-select>
             </el-col>
           </el-row>
-          <el-button type="text" @click="addGift">添加赠送服务</el-button>
+          <el-button type="text" @click="addGift" v-if="type == ''"
+            >添加赠送服务</el-button
+          >
         </el-form-item>
         <el-row>
           <el-col :span="12">
@@ -104,6 +125,7 @@
                 v-model="form.serverId"
                 filterable
                 placeholder="请选择"
+                :disabled="type == 'read'"
               >
                 <el-option
                   v-for="item in serverList"
@@ -123,13 +145,25 @@
             show-word-limit
             v-model="form.remark"
             :autosize="{ minRows: 4 }"
+            :disabled="type == 'read'"
           ></el-input>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="submit" v-loading="btnLoading"
-            >提交</el-button
-          >
-          <el-button class="btn-cancel" @click="cancelPage">取消</el-button>
+        <el-form-item style="text-align: right">
+          <template v-if="type == 'edit'">
+            <el-button type="primary" @click="submit" v-loading="btnLoading"
+              >保存</el-button
+            >
+            <el-button class="btn-cancel" @click="cancelPage">取消</el-button>
+          </template>
+          <template v-else-if="type == 'read'">
+            <el-button type="primary" @click="cancelPage">关闭</el-button>
+          </template>
+          <template v-else>
+            <el-button type="primary" @click="submit" v-loading="btnLoading"
+              >提交</el-button
+            >
+            <el-button class="btn-cancel" @click="cancelPage">取消</el-button>
+          </template>
         </el-form-item>
       </el-form>
     </div>
@@ -160,6 +194,7 @@ export default {
       addUserVisible: false,
       loading: false,
       btnLoading: false,
+      type: "",
       rules: {
         user: [{ required: true, message: "请选择会员", trigger: "change" }],
         card: [
@@ -180,7 +215,13 @@ export default {
     this.getCard();
     this.getProject();
     this.getServer();
-    this.form.date = getDate();
+    if (this.$route.query.id) {
+      this.type = this.$route.query.type;
+      this.getInfo(this.$route.query.id);
+    } else {
+      this.type = "";
+      this.form.date = getDate();
+    }
   },
   methods: {
     submit() {
@@ -196,14 +237,27 @@ export default {
             projectData.push(e.projectId);
           });
           this.$api
-            .post("card/recharge", { projectData, ...info })
+            .post(
+              this.type == "edit" ? "card/recharge/edit" : "card/recharge",
+              {
+                projectData,
+                ...info,
+              }
+            )
             .then((res) => {
               if (res.status == 1) {
                 this.$notify.success({
                   title: "成功",
-                  message: "充卡登记表提交成功！",
+                  message:
+                    this.type == "edit"
+                      ? "充卡登记表修改成功！"
+                      : "充卡登记表提交成功！",
                 });
-                this.$router.replace("/");
+                if (this.type == "edit") {
+                  this.cancelPage();
+                } else {
+                  this.$router.replace("/");
+                }
               }
             })
             .finally(() => {
@@ -216,6 +270,21 @@ export default {
           return false;
         }
       });
+    },
+    getInfo(id) {
+      this.loading = true;
+      this.$api
+        .post("card/recharge/one", { id })
+        .then((res) => {
+          if (res.status == 1) {
+            this.form = res.data;
+            this.form.projectArr = [];
+            res.data.projectData.forEach((e) => {
+              this.form.projectArr.push({ projectId: e });
+            });
+          }
+        })
+        .finally(() => (this.loading = false));
     },
     addGift() {
       this.form.projectArr.push({ projectId: "" });
@@ -257,7 +326,8 @@ export default {
       this.form.telephone = info.telephone;
     },
     cancelPage() {
-      history.go(-1);
+      // history.go(-1);
+      this.$router.back();
     },
   },
 };

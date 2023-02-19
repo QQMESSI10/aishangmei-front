@@ -4,6 +4,7 @@
     filterable
     placeholder="请选择"
     ref="userSelect"
+    :disabled="disabled"
     @change="selectChange"
     @hook:mounted="cancalReadOnly"
     @visible-change="cancalReadOnly"
@@ -20,7 +21,7 @@
 
 <script>
 export default {
-  props: ["userList", "form"],
+  props: ["userList", "form", "disabled"],
   data() {
     return {
       list: [],

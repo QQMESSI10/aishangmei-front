@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <router-view />
+    <keep-alive include="cardHistory, manicureHistory">
+      <router-view />
+    </keep-alive>
   </div>
 </template>
 
@@ -42,5 +44,8 @@
     display: flex;
     flex-direction: column;
   }
+}
+.input-append-min .el-input-group__append {
+  padding: 0 10px;
 }
 </style>

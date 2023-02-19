@@ -61,16 +61,21 @@
         width="90"
       ></el-table-column>
       <el-table-column prop="date" label="日期" width="170"></el-table-column>
-      <el-table-column label="操作" width="170">
+      <el-table-column label="操作" width="150">
         <template slot-scope="scope">
           <el-link
             class="margin-right20"
             type="primary"
-            @click="toDetail(scope)"
+            @click="toDetail(scope.row)"
             >详情</el-link
           >
-          <el-link class="margin-right20" type="warning">修改</el-link>
-          <el-link class="margin-right20" type="danger">删除</el-link>
+          <el-link
+            class="margin-right20"
+            type="warning"
+            @click="toEdit(scope.row)"
+            >修改</el-link
+          >
+          <!-- <el-link class="margin-right20" type="danger">删除</el-link> -->
         </template>
       </el-table-column>
     </el-table>
@@ -93,6 +98,7 @@
 
 <script>
 export default {
+  name: "cardHistory",
   data() {
     return {
       searchForm: {
@@ -101,91 +107,11 @@ export default {
         server: "",
         date: "",
       },
-      tableData: [
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-        {
-          name: "王木木",
-          telephone: "15194102617",
-          project: "美甲",
-          money: 90,
-          server: "姚琳琳",
-          date: "2023-2-12 08:10",
-        },
-      ],
+      tableData: [],
       total: 100,
       currentPage: 1,
       tableLoading: false,
+      exitType: "",
     };
   },
   created() {
@@ -202,7 +128,6 @@ export default {
         })
         .then((res) => {
           if (res.status == 1) {
-            console.log(res);
             this.tableData = res.data.list;
             this.total = res.data.total;
           } else {
@@ -226,6 +151,24 @@ export default {
       };
       this.search();
     },
+    toDetail(data) {
+      this.$router.push({
+        path: "/card",
+        query: {
+          id: data.id,
+          type: "read",
+        },
+      });
+    },
+    toEdit(data) {
+      this.$router.push({
+        path: "/card",
+        query: {
+          id: data.id,
+          type: "edit",
+        },
+      });
+    },
     handleSizeChange() {},
     handleCurrentChange(current) {
       this.currentPage = current;
@@ -238,6 +181,19 @@ export default {
       //禁止软键盘弹出
       document.activeElement.blur();
     },
+  },
+  beforeRouteLeave(to, from, next) {
+    this.exitType = to.query.type;
+    next();
+  },
+  activated() {
+    console.log(this.exitType);
+    if (this.exitType == "edit") {
+      this.getTableData();
+    }
+    if (!this.exitType) {
+      this.search();
+    }
   },
 };
 </script>

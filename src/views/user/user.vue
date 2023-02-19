@@ -29,7 +29,7 @@
       <el-form-item>
         <el-button type="warning" @click="search">查询</el-button>
         <el-button @click="searchFormReset">重置</el-button>
-        <el-button type="warning" class="btn-add" @click="addUserVisible = true"
+        <el-button type="warning" class="btn-add" @click="createUser"
           >新增会员</el-button
         >
       </el-form-item>
@@ -249,6 +249,14 @@ export default {
       this.addUserType = "update";
       this.currentUser = Object.assign({}, user);
       this.addUserVisible = true;
+    },
+    createUser() {
+      this.addUserType = "add";
+      this.currentUser = null;
+      this.addUserVisible = true;
+    },
+    closeUserVisible() {
+      this.addUserVisible = false;
     },
     searchFormReset() {
       this.searchForm = {
