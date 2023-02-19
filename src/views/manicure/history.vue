@@ -82,6 +82,7 @@
 
 <script>
 export default {
+  name: "manicureHistory",
   data() {
     return {
       searchForm: {

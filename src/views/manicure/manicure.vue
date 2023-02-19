@@ -22,6 +22,8 @@
                 ref="user"
                 :userList="userList"
                 :form="form"
+                :disabled="!!type"
+                @userChange="userChange"
               ></select-user>
             </el-form-item>
           </el-col>
@@ -89,17 +91,21 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="9" class="balance" v-if="payItem.payType > 0">
-              <el-button type="text">某某卡支付后余额：888元</el-button>
+            <el-col :span="10">
+              <el-row>
+                <el-col :span="15">
+                  <el-form-item label="支付金额：" class="input-append-min">
+                    <el-input v-model="payItem.money">
+                      <template slot="append">元</template>
+                    </el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="9">
+                  <p class="money-tips">实收:200.85元</p>
+                </el-col>
+              </el-row>
             </el-col>
-            <el-col :span="9" v-if="payItem.payType == -1">
-              <el-form-item label="面收金额：">
-                <el-input v-model="payItem.money">
-                  <template slot="append">元</template>
-                </el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="3" class="add-icon">
+            <el-col :span="2" class="add-icon">
               <el-button type="text" @click="payAdd(projectItem)"
                 ><i class="el-icon-circle-plus-outline"></i
               ></el-button>
@@ -215,13 +221,114 @@ export default {
           payArr: [{ type: "" }],
         },
       ],
+      type: "",
       addUserVisible: false,
     };
   },
   created() {
-    this.form.date = getDate();
+    this.getUser();
+    this.getCard();
+    this.getProject();
+    this.getServer();
+    if (this.$route.query.id) {
+      this.type = this.$route.query.type;
+      this.getInfo(this.$route.query.id);
+    } else {
+      this.type = "";
+      this.form.date = getDate();
+    }
   },
   methods: {
+    submit() {
+      this.btnLoading = true;
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true;
+          // eslint-disable-next-line no-unused-vars
+          const { telephone, projectArr, ...info } = this.form;
+          const arr = [...projectArr];
+          let projectData = [];
+          arr.forEach((e) => {
+            projectData.push(e.projectId);
+          });
+          this.$api
+            .post(
+              this.type == "edit" ? "card/recharge/edit" : "card/recharge",
+              {
+                projectData,
+                ...info,
+              }
+            )
+            .then((res) => {
+              if (res.status == 1) {
+                this.$notify.success({
+                  title: "成功",
+                  message:
+                    this.type == "edit"
+                      ? "充卡登记表修改成功！"
+                      : "充卡登记表提交成功！",
+                });
+                if (this.type == "edit") {
+                  this.cancelPage();
+                } else {
+                  this.$router.replace("/");
+                }
+              }
+            })
+            .finally(() => {
+              this.btnLoading = false;
+              this.loading = false;
+            });
+        } else {
+          this.$message.error("请正确填写登记表信息后提交");
+          this.btnLoading = false;
+          return false;
+        }
+      });
+    },
+    getInfo(id) {
+      this.loading = true;
+      this.$api
+        .post("card/recharge/one", { id })
+        .then((res) => {
+          if (res.status == 1) {
+            this.form = res.data;
+            this.form.projectArr = [];
+            res.data.projectData.forEach((e) => {
+              this.form.projectArr.push({ projectId: e });
+            });
+          }
+        })
+        .finally(() => (this.loading = false));
+    },
+    getUser() {
+      this.$api.post("user/list").then((res) => {
+        if (res.status == 1) {
+          this.userList = res.data.list;
+        }
+      });
+    },
+    getCard() {
+      this.$api.post("card/list").then((res) => {
+        if (res.status == 1) {
+          this.cardTypeList = res.data.list;
+        }
+      });
+    },
+    getProject() {
+      this.$api.post("project/list").then((res) => {
+        if (res.status == 1) {
+          this.projectList = res.data.list;
+        }
+      });
+    },
+    getServer() {
+      this.$api.post("server/list").then((res) => {
+        if (res.status == 1) {
+          this.serverList = res.data.list;
+        }
+      });
+    },
     addProject() {
       this.projectArr.push({
         project: "",
@@ -321,5 +428,10 @@ export default {
 }
 .project-add {
   margin-left: 20px;
+}
+.money-tips {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
 }
 </style>
