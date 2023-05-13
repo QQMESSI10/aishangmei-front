@@ -54,7 +54,7 @@
           <el-link
             class="margin-right20"
             type="success"
-            @click="showCard(scope)"
+            @click="showCard(scope.row)"
             >持卡详情</el-link
           >
         </template>
@@ -74,7 +74,7 @@
           <el-link
             class="margin-right20"
             type="primary"
-            @click="toDetail(scope)"
+            @click="toDetail(scope.row)"
             >消费记录</el-link
           >
           <el-link
@@ -98,7 +98,7 @@
     >
     </el-pagination>
     <el-button type="warning" plain class="btn-home" @click="goBack"
-      >返回主菜单</el-button
+      >返回</el-button
     >
     <add-user
       :visible="addUserVisible"
@@ -108,10 +108,11 @@
       @refresh="search"
     ></add-user>
     <el-dialog
-      title="王木木 - 持卡详情"
+      :title="showCardName + ' - 持卡详情'"
       :visible.sync="cardVisible"
       width="550px"
       class="dialog-card"
+      destroy-on-close
     >
       <!-- <p class="title">王木木 - 15194102617</p> -->
       <el-table
@@ -121,9 +122,14 @@
         height="100%"
         cell-class-name="card-cell-nopadding"
         style="width: 100%"
+        v-loading="cardLoading"
       >
         <el-table-column label="卡类型" prop="card"></el-table-column>
-        <el-table-column label="余额" width="80" prop="money"></el-table-column>
+        <el-table-column
+          label="余额"
+          width="80"
+          prop="balance"
+        ></el-table-column>
         <el-table-column label="明细" width="100">
           <template slot-scope="scope">
             <el-button type="text" @click="cardDetail(scope.row)"
@@ -141,6 +147,7 @@
       :visible.sync="projectVisible"
       width="550px"
       class="dialog-card"
+      destroy-on-close
     >
       <!-- <p class="title">王木木 - 15194102617</p> -->
       <el-table
@@ -192,36 +199,20 @@ export default {
       total: 0,
       currentPage: 1,
       cardVisible: false,
-      cardData: [
-        { card: "七折优惠卡", money: 50 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 200 },
-        { card: "七折优惠卡", money: 800 },
-      ],
+      cardData: [],
       projectVisible: false,
       projectData: [{ project: "价值99元美甲" }],
       addUserVisible: false,
       addUserType: "add",
       currentUser: null,
+      showCardName: "",
+      cardLoading: false,
     };
   },
   created() {
     this.getTableData();
   },
   methods: {
-    showCard() {
-      this.cardVisible = true;
-    },
     getTableData() {
       this.tableLoading = true;
       this.$api
@@ -244,6 +235,31 @@ export default {
     search() {
       this.currentPage = 1;
       this.getTableData();
+    },
+    showCard(row) {
+      console.log(row);
+      this.showCardName = row.name;
+      this.cardSearch(row.id);
+      this.cardVisible = true;
+    },
+    cardSearch(id) {
+      this.cardLoading = true;
+      this.$api
+        .post("user/card", { userId: id })
+        .then((res) => {
+          if (res.status == 1) {
+            this.cardData = res.data;
+          } else {
+            this.cardData = [];
+          }
+        })
+        .finally(() => (this.cardLoading = false));
+    },
+    toDetail(row) {
+      this.$router.push({
+        name: "ManicureHistory",
+        params: { telephone: row.telephone },
+      });
     },
     editInfo(user) {
       this.addUserType = "update";

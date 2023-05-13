@@ -122,7 +122,7 @@
     >
     </el-pagination>
     <el-button type="primary" plain class="btn-home" @click="goBack"
-      >返回主菜单</el-button
+      >返回</el-button
     >
   </div>
 </template>
@@ -134,7 +134,7 @@ export default {
     return {
       searchForm: {
         name: "",
-        telphone: "",
+        telephone: "",
         server: "",
         date: "",
       },
@@ -145,7 +145,11 @@ export default {
       serverList: [],
     };
   },
-  created() {
+  mounted() {
+    console.log(this.$route.params);
+    if (this.$route.params.telephone) {
+      this.searchForm.telephone = this.$route.params.telephone;
+    }
     this.search();
     this.getServer();
   },
@@ -177,7 +181,7 @@ export default {
     formReset() {
       this.searchForm = {
         name: "",
-        telphone: "",
+        telephone: "",
         server: "",
         date: "",
       };

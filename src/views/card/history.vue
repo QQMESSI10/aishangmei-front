@@ -105,7 +105,7 @@
     >
     </el-pagination>
     <el-button type="success" plain class="btn-home" @click="goBack"
-      >返回主菜单</el-button
+      >返回</el-button
     >
   </div>
 </template>
