@@ -5,6 +5,7 @@
         <el-input
           class="search-input"
           v-model="searchForm.name"
+          @change="search"
           placeholder="请输入"
         ></el-input>
       </el-form-item>
@@ -13,15 +14,26 @@
           class="search-telephone"
           v-model="searchForm.telephone"
           type="number"
+          @change="search"
           placeholder="请输入"
         ></el-input>
       </el-form-item>
       <el-form-item label="服务人">
-        <el-input
-          class="search-input"
+        <el-select
           v-model="searchForm.server"
-          placeholder="请输入"
-        ></el-input>
+          filterable
+          @change="search"
+          placeholder="请选择"
+          clearable
+        >
+          <el-option
+            v-for="item in serverList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          >
+          </el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="日期" label-width="50px">
         <el-date-picker
@@ -30,6 +42,8 @@
           type="date"
           placeholder="选择日期"
           value-format="yyyy-MM-dd"
+          clearable
+          @change="search"
           @focus="forbid"
         >
         </el-date-picker>
@@ -112,10 +126,12 @@ export default {
       currentPage: 1,
       tableLoading: false,
       exitType: "",
+      serverList: [],
     };
   },
   created() {
     this.search();
+    this.getServer();
   },
   methods: {
     getTableData() {
@@ -141,6 +157,13 @@ export default {
       this.total = 0;
       this.currentPage = 1;
       this.getTableData();
+    },
+    getServer() {
+      this.$api.post("server/list").then((res) => {
+        if (res.status == 1) {
+          this.serverList = res.data.list;
+        }
+      });
     },
     formReset() {
       this.searchForm = {

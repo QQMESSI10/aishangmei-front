@@ -46,6 +46,6 @@
   }
 }
 .input-append-min .el-input-group__append {
-  padding: 0 10px;
+  padding: 0 8px;
 }
 </style>
