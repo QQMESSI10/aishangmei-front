@@ -33,6 +33,7 @@
             >
             <add-user
               :visible="addUserVisible"
+              @refresh="addUser"
               @close="addUserVisible = false"
             ></add-user>
           </el-col>
@@ -49,6 +50,7 @@
         </el-row>
         <div
           class="project-box"
+          :style="projectItem.isError ? { borderColor: '#f00' } : {}"
           v-for="(projectItem, index) in projectArr"
           :key="index"
         >
@@ -58,9 +60,9 @@
                 <el-select v-model="projectItem.project" placeholder="请选择">
                   <el-option
                     v-for="item in projectList"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
                   >
                   </el-option>
                 </el-select>
@@ -68,7 +70,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="金额：">
-                <el-input v-model="projectItem.money">
+                <el-input v-model.number="projectItem.money" type="number">
                   <template slot="append">元</template>
                 </el-input>
               </el-form-item>
@@ -80,49 +82,80 @@
           >
             <el-col :span="12">
               <el-form-item label="支付方式：" prop="payType">
-                <el-select v-model="payItem.payType" placeholder="请选择">
+                <el-select
+                  v-model="payItem.payType"
+                  placeholder="请选择"
+                  @change="payTypeChange(payItem)"
+                >
                   <el-option
                     v-for="item in payTypeList"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                    :key="item.id"
+                    :label="item.name + '(余额：' + item.balance + '元)'"
+                    :value="item.id"
                   >
                   </el-option>
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="10">
+            <el-col :span="11">
               <el-row>
-                <el-col :span="15">
+                <el-col :span="payItem.payType == -1 ? 24 : 13">
                   <el-form-item label="支付金额：" class="input-append-min">
-                    <el-input v-model="payItem.money">
+                    <el-input
+                      v-model.number="payItem.money"
+                      placeholder="0"
+                      type="number"
+                      @change="payMoneyChange(payItem)"
+                      :disabled="!payItem.payType"
+                    >
                       <template slot="append">元</template>
                     </el-input>
                   </el-form-item>
                 </el-col>
-                <el-col :span="9">
-                  <p class="money-tips">实收:200.85元</p>
+                <el-col :span="11" v-if="payItem.payType != -1">
+                  <el-form-item
+                    label="实扣："
+                    class="input-append-min"
+                    label-width="65px"
+                    disabled
+                  >
+                    <el-input
+                      v-model.number="payItem.realMoney"
+                      type="number"
+                      placeholder="0"
+                      @change="payRealMoneyChange(payItem)"
+                      :disabled="true"
+                    >
+                      <template slot="append">元</template>
+                    </el-input>
+                  </el-form-item>
                 </el-col>
               </el-row>
             </el-col>
-            <el-col :span="2" class="add-icon">
+            <el-col :span="1" class="add-icon">
               <el-button type="text" @click="payAdd(projectItem)"
                 ><i class="el-icon-circle-plus-outline"></i
               ></el-button>
             </el-col>
           </el-row>
           <el-row>
-            <!-- <el-button
-              v-if="projectArr.length > 1"
-              type="text"
-              @click="removeProject"
-              class="project-remove"
-              >删除项目</el-button
-            > -->
+            <el-popconfirm
+              v-if="projectArr.length > 1 && index != 0"
+              title="请确认是否要删除该项目？"
+              @confirm="removeProject(index)"
+            >
+              <el-button
+                type="text"
+                slot="reference"
+                class="project-operate project-remove"
+                >删除项目</el-button
+              >
+            </el-popconfirm>
             <el-button
               v-if="index == projectArr.length - 1"
               type="text"
               @click="addProject"
+              class="project-operate"
               >新增项目</el-button
             >
           </el-row>
@@ -133,9 +166,9 @@
               <el-select v-model="form.server" filterable placeholder="请选择">
                 <el-option
                   v-for="item in serverList"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
                 >
                 </el-option>
               </el-select>
@@ -152,7 +185,7 @@
           ></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary">提交</el-button>
+          <el-button type="primary" @click="submit">提交</el-button>
           <el-button class="btn-cancel" @click="cancelPage">取消</el-button>
         </el-form-item>
       </el-form>
@@ -170,64 +203,31 @@ export default {
     return {
       form: {
         user: "",
-        project: "",
-        payType: "",
-        money: "",
         server: "",
         remark: "",
         date: "",
-        telephone: "15194102617",
+        telephone: "",
       },
-      userList: [
-        { label: "姚琳琳(4589)", value: 1 },
-        { label: "姚琳琳(1234)", value: 2 },
-        { label: "秦祥(2617)", value: 3 },
-      ],
-      projectList: [
-        { label: "美甲", value: 1 },
-        { label: "美甲", value: 2 },
-        { label: "美甲", value: 3 },
-        { label: "美甲", value: 4 },
-        { label: "美甲", value: 5 },
-        { label: "美甲", value: 6 },
-        { label: "美甲", value: 7 },
-        { label: "美甲", value: 8 },
-        { label: "美甲", value: 9 },
-        { label: "美甲", value: 10 },
-        { label: "美甲", value: 11 },
-        { label: "美甲", value: 12 },
-        { label: "美甲", value: 13 },
-        { label: "美甲", value: 14 },
-        { label: "美甲", value: 15 },
-        { label: "美甲", value: 16 },
-        { label: "美甲", value: 17 },
-        { label: "美甲", value: 18 },
-        { label: "美甲", value: 19 },
-        { label: "美甲", value: 20 },
-        { label: "美甲", value: 21 },
-      ],
-      serverList: [
-        { label: "赵总", value: 1 },
-        { label: "贝贝", value: 2 },
-      ],
-      payTypeList: [
-        { label: "面收", value: -1 },
-        { label: "各种卡...", value: 1 },
-      ],
+      userList: [],
+      projectList: [],
+      userProject: [],
+      serverList: [],
+      basePayType: [{ id: -1, name: "面收", balance: 0 }],
+      payTypeList: [],
       projectArr: [
         {
           project: "",
-          money: "",
-          payArr: [{ type: "" }],
+          money: null,
+          payArr: [{ payType: "", money: null, realMoney: null }],
         },
       ],
       type: "",
       addUserVisible: false,
+      submitProject: [],
     };
   },
   created() {
     this.getUser();
-    this.getCard();
     this.getProject();
     this.getServer();
     if (this.$route.query.id) {
@@ -243,48 +243,75 @@ export default {
       this.btnLoading = true;
       this.$refs.form.validate((valid) => {
         if (valid) {
-          this.loading = true;
-          // eslint-disable-next-line no-unused-vars
-          const { telephone, projectArr, ...info } = this.form;
-          const arr = [...projectArr];
-          let projectData = [];
-          arr.forEach((e) => {
-            projectData.push(e.projectId);
-          });
-          this.$api
-            .post(
-              this.type == "edit" ? "card/recharge/edit" : "card/recharge",
-              {
-                projectData,
+          if (this.validProject()) {
+            if (this.submitProject.length == 0) {
+              this.$message.error("没有有效的项目");
+            } else {
+              this.loading = true;
+              // eslint-disable-next-line no-unused-vars
+              const { telephone, ...info } = this.form;
+              const param = {
                 ...info,
-              }
-            )
-            .then((res) => {
-              if (res.status == 1) {
-                this.$notify.success({
-                  title: "成功",
-                  message:
-                    this.type == "edit"
-                      ? "充卡登记表修改成功！"
-                      : "充卡登记表提交成功！",
+                project: this.submitProject,
+              };
+              console.log(param);
+              this.$api
+                .post(
+                  this.type == "edit" ? "consume/edit" : "consume/add",
+                  param
+                )
+                .then((res) => {
+                  if (res.status == 1) {
+                    this.$notify.success({
+                      title: "成功",
+                      message:
+                        this.type == "edit"
+                          ? "消费登记表修改成功！"
+                          : "消费登记表提交成功！",
+                    });
+                    if (this.type == "edit") {
+                      this.cancelPage();
+                    } else {
+                      this.$router.replace("/");
+                    }
+                  }
+                })
+                .finally(() => {
+                  this.btnLoading = false;
+                  this.loading = false;
                 });
-                if (this.type == "edit") {
-                  this.cancelPage();
-                } else {
-                  this.$router.replace("/");
-                }
-              }
-            })
-            .finally(() => {
-              this.btnLoading = false;
-              this.loading = false;
-            });
+            }
+          } else {
+            this.$message.error("部分项目金额与支付金额不相等");
+          }
         } else {
           this.$message.error("请正确填写登记表信息后提交");
           this.btnLoading = false;
           return false;
         }
       });
+    },
+    validProject() {
+      let valid = true;
+      this.submitProject = [];
+      this.projectArr.forEach((project) => {
+        delete project.isError;
+        if (project.project) {
+          let payMoney = 0;
+          project.payArr.forEach((pay) => {
+            payMoney += Number(pay.money);
+          });
+          console.log(payMoney);
+          console.log(project.money);
+          if (Number(project.money) !== payMoney) {
+            valid = false;
+            project.isError = true;
+          } else {
+            this.submitProject.push(project);
+          }
+        }
+      });
+      return valid;
     },
     getInfo(id) {
       this.loading = true;
@@ -308,12 +335,14 @@ export default {
         }
       });
     },
-    getCard() {
-      this.$api.post("card/list").then((res) => {
-        if (res.status == 1) {
-          this.cardTypeList = res.data.list;
-        }
-      });
+    getUserCard() {
+      this.$api
+        .post("card/userCard", { userId: this.form.user })
+        .then((res) => {
+          if (res.status == 1) {
+            this.payTypeList = this.basePayType.concat(res.data);
+          }
+        });
     },
     getProject() {
       this.$api.post("project/list").then((res) => {
@@ -332,17 +361,56 @@ export default {
     addProject() {
       this.projectArr.push({
         project: "",
-        money: "",
-        payArr: [{ type: "" }],
+        money: null,
+        payArr: [{ payType: "", money: null, realMoney: null }],
       });
     },
     payAdd(project) {
-      project.payArr.push({ type: "" });
+      project.payArr.push({ payType: "", money: null, realMoney: null });
     },
     addUserSubmit() {},
-    removeProject() {},
+    removeProject(index) {
+      this.projectArr.splice(index, 1);
+    },
     cancelPage() {
-      history.go(-1);
+      // history.go(-1);
+      this.$router.back();
+    },
+    addUser(info) {
+      this.getUser();
+      this.form.user = info.id;
+      this.form.telephone = info.telephone;
+    },
+    userChange(info) {
+      this.form.telephone = info.telephone;
+      this.getUserCard();
+      this.getUserProject();
+    },
+    payTypeChange(item) {
+      item.money = null;
+      item.realMoney = null;
+    },
+    payMoneyChange(item) {
+      if (item.money) {
+        let discount = 1;
+        if (item.payType && item.payType != -1) {
+          discount = this.payTypeList.find(
+            (f) => f.id == item.payType
+          ).discount;
+        }
+        item.realMoney = parseInt(item.money * discount);
+      } else {
+        item.realMoney = null;
+      }
+    },
+    getUserProject() {
+      this.$api
+        .post("project/userProject", { userId: this.form.user })
+        .then((res) => {
+          if (res.status == 1) {
+            this.userProject = res.data;
+          }
+        });
     },
   },
 };
@@ -433,5 +501,8 @@ export default {
   height: 40px;
   line-height: 40px;
   font-size: 14px;
+}
+.project-operate {
+  margin: 0 10px;
 }
 </style>
