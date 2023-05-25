@@ -13,6 +13,7 @@ import ManicureHistory from "../views/manicure/history.vue";
 import Card from "../views/card/card.vue";
 import CardHistory from "../views/card/history.vue";
 import User from "../views/user/user.vue";
+import Insert from "../views/insert/insert.vue";
 const routes = [
   {
     path: "/login",
@@ -48,6 +49,11 @@ const routes = [
     path: "/user",
     name: "User",
     component: User,
+  },
+  {
+    path: "/insert",
+    name: "Insert",
+    component: Insert,
   },
 ];
 

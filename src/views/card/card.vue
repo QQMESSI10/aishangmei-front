@@ -64,6 +64,7 @@
                 v-model="form.card"
                 placeholder="请选择"
                 :disabled="!!type"
+                @change="cardChange"
               >
                 <el-option
                   v-for="item in cardTypeList"
@@ -80,7 +81,7 @@
           <el-row>
             <el-col :span="12">
               <el-input
-                v-model="form.money"
+                v-model.number="form.money"
                 type="number"
                 :disabled="!!type"
                 placeholder="请输入"
@@ -88,8 +89,11 @@
                 <template slot="append">元</template>
               </el-input>
             </el-col>
-            <el-col :span="12">
-              <!-- <span>充值后卡内余额：9999元</span> -->
+            <el-col
+              :span="12"
+              v-if="selectCard.type == 1 || selectCard.type == 3"
+            >
+              <span>到账余额：{{ realMoney }}元</span>
             </el-col>
           </el-row>
         </el-form-item>
@@ -185,6 +189,7 @@ export default {
         telephone: "",
         card: "",
         serverId: "",
+        money: null,
         projectArr: [{ projectId: "" }],
       },
       userList: [],
@@ -208,6 +213,7 @@ export default {
         ],
       },
       reg: /^(\d{3})\d{4}(\d{4})$/,
+      selectCard: {},
     };
   },
   created() {
@@ -222,6 +228,23 @@ export default {
       this.type = "";
       this.form.date = getDate();
     }
+  },
+  computed: {
+    realMoney() {
+      if (this.selectCard.type == 1 || this.selectCard.type == 3) {
+        if (this.form.money && this.form.money >= this.selectCard.params[0]) {
+          return this.form.money + this.selectCard.params[1];
+        } else {
+          return this.form.money;
+        }
+      } else if (this.selectCard.type == 4) {
+        return this.selectCard.params[1];
+      } else if (this.selectCard.type == 2) {
+        return this.form.money;
+      } else {
+        return 0;
+      }
+    },
   },
   methods: {
     submit() {
@@ -242,6 +265,7 @@ export default {
               {
                 projectData,
                 ...info,
+                realMoney: this.realMoney,
               }
             )
             .then((res) => {
@@ -288,6 +312,10 @@ export default {
     },
     addGift() {
       this.form.projectArr.push({ projectId: "" });
+    },
+    cardChange(val) {
+      this.selectCard = this.cardTypeList.find((f) => f.id == val);
+      this.selectCard.params = JSON.parse(this.selectCard.params);
     },
     getUser() {
       this.$api.post("user/list").then((res) => {

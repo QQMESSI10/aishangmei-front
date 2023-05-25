@@ -3,6 +3,7 @@ import { Notification } from "element-ui";
 import { getToken } from "../utils/user.js";
 import { errHandle } from "../utils/utils";
 let baseURL = "http://localhost:8888/";
+// let baseURL = "http://59.110.218.237:8888/";
 
 let config = {
   baseURL: baseURL,

@@ -59,7 +59,7 @@
           >
         </template>
       </el-table-column>
-      <el-table-column label="赠送项目详情">
+      <!-- <el-table-column label="赠送项目详情">
         <template slot-scope="scope">
           <el-link
             class="margin-right20"
@@ -68,7 +68,7 @@
             >赠送项目详情</el-link
           >
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="操作" width="200">
         <template slot-scope="scope">
           <el-link
@@ -130,13 +130,13 @@
           width="80"
           prop="balance"
         ></el-table-column>
-        <el-table-column label="明细" width="100">
+        <!-- <el-table-column label="明细" width="100">
           <template slot-scope="scope">
             <el-button type="text" @click="cardDetail(scope.row)"
               >查看明细</el-button
             >
           </template>
-        </el-table-column>
+        </el-table-column> -->
       </el-table>
       <span slot="footer" class="dialog-footer">
         <el-button type="primary" @click="cardVisible = false">关 闭</el-button>

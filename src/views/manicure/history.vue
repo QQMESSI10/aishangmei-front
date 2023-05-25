@@ -97,7 +97,7 @@
         width="170"
         align="center"
       ></el-table-column>
-      <el-table-column label="操作" width="180" align="center">
+      <!-- <el-table-column label="操作" width="180" align="center">
         <template slot-scope="scope">
           <el-link
             class="margin-right20"
@@ -108,7 +108,7 @@
           <el-link class="margin-right20" type="warning">修改</el-link>
           <el-link class="margin-right20" type="danger">删除</el-link>
         </template>
-      </el-table-column>
+      </el-table-column> -->
     </el-table>
     <el-pagination
       background
