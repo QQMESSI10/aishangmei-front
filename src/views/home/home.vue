@@ -74,10 +74,10 @@ export default {
       insertDialog: false,
       insertTypes: [
         { label: "会员信息", value: "user" },
-        { label: "卡类型", value: "card" },
+        // { label: "卡类型", value: "card" },
         { label: "服务人员", value: "server" },
-        { label: "服务项目", value: "project" },
-        { label: "会员持卡", value: "userCard" },
+        // { label: "服务项目", value: "project" },
+        // { label: "会员持卡", value: "userCard" },
       ],
       insertType: "",
     };

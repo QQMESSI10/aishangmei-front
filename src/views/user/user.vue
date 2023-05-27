@@ -119,7 +119,6 @@
         :data="cardData"
         border
         stripe
-        height="100%"
         cell-class-name="card-cell-nopadding"
         style="width: 100%"
         v-loading="cardLoading"

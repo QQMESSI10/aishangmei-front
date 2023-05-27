@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <el-form :model="searchForm" label-width="60px" inline>
+    <el-form :model="searchForm" label-width="60px" inline v-if="false">
       <el-form-item label="姓名" label-width="50px">
         <el-input
           class="search-input"
@@ -73,10 +73,10 @@
         align="center"
       >
       </el-table-column>
-      <el-table-column label="项目（金额）" align="center">
+      <el-table-column label="项目（金额）【服务人】" align="center">
         <template slot-scope="scope">
           <el-row v-for="(item, index) in scope.row.project" :key="index"
-            >{{ item.name }}（{{ item.money }}）</el-row
+            >{{ item.name }}（{{ item.money }}）【{{ item.server }}】</el-row
           >
         </template>
       </el-table-column>
@@ -86,29 +86,27 @@
         </template>
       </el-table-column>
       <el-table-column
-        prop="server"
-        label="服务人"
-        width="100"
-        align="center"
-      ></el-table-column>
-      <el-table-column
         prop="date"
         label="日期"
         width="170"
         align="center"
       ></el-table-column>
-      <!-- <el-table-column label="操作" width="180" align="center">
+      <el-table-column label="操作" width="180" align="center">
         <template slot-scope="scope">
           <el-link
             class="margin-right20"
             type="primary"
-            @click="toDetail(scope)"
+            @click="toDetail(scope.row)"
             >详情</el-link
           >
-          <el-link class="margin-right20" type="warning">修改</el-link>
-          <el-link class="margin-right20" type="danger">删除</el-link>
+          <el-link
+            class="margin-right20"
+            type="warning"
+            @click="toEdit(scope.row)"
+            >修改</el-link
+          >
         </template>
-      </el-table-column> -->
+      </el-table-column>
     </el-table>
     <el-pagination
       background
@@ -187,6 +185,24 @@ export default {
       };
       this.search();
     },
+    toDetail(data) {
+      this.$router.push({
+        path: "/manicure",
+        query: {
+          id: data.id,
+          type: "read",
+        },
+      });
+    },
+    toEdit(data) {
+      this.$router.push({
+        path: "/manicure",
+        query: {
+          id: data.id,
+          type: "edit",
+        },
+      });
+    },
     getServer() {
       this.$api.post("server/list").then((res) => {
         if (res.status == 1) {
@@ -195,7 +211,10 @@ export default {
       });
     },
     handleSizeChange() {},
-    handleCurrentChange() {},
+    handleCurrentChange(current) {
+      this.currentPage = current;
+      this.getTableData();
+    },
     goBack() {
       history.go(-1);
     },

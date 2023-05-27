@@ -102,10 +102,11 @@
             <el-col :span="16">无赠送服务</el-col>
           </el-row>
           <el-row v-for="(item, index) in form.projectArr" :key="index">
-            <el-col :span="16" class="gift-col">
+            <el-col :span="12" class="gift-col">
               <el-select
                 v-model="item.projectId"
                 placeholder="请选择"
+                clearable
                 :disabled="!!type"
               >
                 <el-option
@@ -116,6 +117,16 @@
                 >
                 </el-option>
               </el-select>
+            </el-col>
+            <el-col :span="12" class="gift-col">
+              <el-date-picker
+                v-model="item.expiryDate"
+                type="date"
+                value-format="yyyy-MM-dd"
+                placeholder="使用截止日期"
+                :disabled="!!type"
+              >
+              </el-date-picker>
             </el-col>
           </el-row>
           <el-button type="text" @click="addGift" v-if="type == ''"
@@ -190,7 +201,7 @@ export default {
         card: "",
         serverId: "",
         money: null,
-        projectArr: [{ projectId: "" }],
+        projectArr: [{ projectId: "", expiryDate: "" }],
       },
       userList: [],
       cardTypeList: [],
@@ -254,11 +265,7 @@ export default {
           this.loading = true;
           // eslint-disable-next-line no-unused-vars
           const { telephone, projectArr, ...info } = this.form;
-          const arr = [...projectArr];
-          let projectData = [];
-          arr.forEach((e) => {
-            projectData.push(e.projectId);
-          });
+          const projectData = projectArr.filter((f) => f.projectId);
           this.$api
             .post(
               this.type == "edit" ? "card/recharge/edit" : "card/recharge",
@@ -304,14 +311,14 @@ export default {
             this.form = res.data;
             this.form.projectArr = [];
             res.data.projectData.forEach((e) => {
-              this.form.projectArr.push({ projectId: e });
+              this.form.projectArr.push(e);
             });
           }
         })
         .finally(() => (this.loading = false));
     },
     addGift() {
-      this.form.projectArr.push({ projectId: "" });
+      this.form.projectArr.push({ projectId: "", expiryDate: "" });
     },
     cardChange(val) {
       this.selectCard = this.cardTypeList.find((f) => f.id == val);

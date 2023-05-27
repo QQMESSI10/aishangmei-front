@@ -11,6 +11,7 @@
           type="datetime"
           placeholder="选择日期时间"
           value-format="yyyy-MM-dd hh:mm:ss"
+          :disabled="type == 'read'"
         >
         </el-date-picker>
       </div>
@@ -20,6 +21,7 @@
         label-width="95px"
         class="form"
         :rules="rules"
+        v-loading="loading"
       >
         <el-row>
           <el-col :span="10">
@@ -75,6 +77,7 @@
                   <el-select
                     v-model="projectItem.project"
                     placeholder="请选择"
+                    :disabled="!!type"
                     @change="projectChange(projectItem)"
                   >
                     <el-option
@@ -89,7 +92,11 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item label="金额：">
-                  <el-input v-model.number="projectItem.money" type="number">
+                  <el-input
+                    v-model.number="projectItem.money"
+                    type="number"
+                    :disabled="!!type"
+                  >
                     <template slot="append">元</template>
                   </el-input>
                 </el-form-item>
@@ -100,12 +107,12 @@
               :key="payIndex"
             >
               <el-col :span="12">
-                <el-form-item label="支付方式：" prop="pay">
+                <el-form-item label="支付方式：" prop="pay" class="pay-type">
                   <el-select
                     v-model="payItem.pay"
                     placeholder="请选择"
                     @change="payTypeChange(payItem)"
-                    :disabled="!projectItem.project"
+                    :disabled="!projectItem.project || !!type"
                     value-key="id"
                   >
                     <el-option
@@ -116,6 +123,11 @@
                     >
                     </el-option>
                   </el-select>
+                  <span
+                    class="pay-expiry"
+                    v-if="!type && payItem.pay && payItem.pay.expiryDate"
+                    >有效期至{{ payItem.pay.expiryDate }}</span
+                  >
                 </el-form-item>
               </el-col>
               <el-col
@@ -140,8 +152,8 @@
                         v-model.number="payItem.money"
                         placeholder="0"
                         type="number"
-                        @change="payMoneyChange(payItem)"
-                        :disabled="!payItem.pay"
+                        @change="payMoneyChange(payItem, projectItem.project)"
+                        :disabled="!payItem.pay || !!type"
                       >
                         <template slot="append">元</template>
                       </el-input>
@@ -173,7 +185,7 @@
                   </el-col>
                 </el-row>
               </el-col>
-              <el-col :span="1" class="add-icon">
+              <el-col :span="1" class="add-icon" v-if="!type">
                 <el-button type="text" @click="payAdd(projectItem)"
                   ><i class="el-icon-circle-plus-outline"></i
                 ></el-button>
@@ -186,6 +198,7 @@
                     v-model="projectItem.server"
                     filterable
                     placeholder="请选择"
+                    :disabled="type == 'read'"
                   >
                     <el-option
                       v-for="item in serverList"
@@ -200,7 +213,7 @@
             </el-row>
             <el-row>
               <el-popconfirm
-                v-if="projectArr.length > 1 && index != 0"
+                v-if="projectArr.length > 1 && index != 0 && !type"
                 title="请确认是否要删除该项目？"
                 @confirm="removeProject(index)"
               >
@@ -212,7 +225,7 @@
                 >
               </el-popconfirm>
               <el-button
-                v-if="index == projectArr.length - 1"
+                v-if="index == projectArr.length - 1 && !type"
                 type="text"
                 @click="addProject"
                 class="project-operate"
@@ -228,12 +241,26 @@
             maxlength="80"
             show-word-limit
             :autosize="{ minRows: 4 }"
+            :disabled="type == 'read'"
           ></el-input>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="submit">提交</el-button>
-          <el-button class="btn-cancel" @click="cancelPage">取消</el-button>
-        </el-form-item>
+        <el-button
+          v-if="!type"
+          type="primary"
+          class="btn-submit"
+          :loading="loading"
+          @click="submit"
+          >提交</el-button
+        >
+        <el-button
+          v-if="type == 'edit'"
+          class="btn-submit"
+          type="primary"
+          :loading="loading"
+          @click="edit"
+          >保存</el-button
+        >
+        <el-button @click="cancelPage">取消</el-button>
       </el-form>
     </div>
   </div>
@@ -260,7 +287,7 @@ export default {
       projectList: [],
       userProject: [],
       serverList: [],
-      basePayType: [{ id: -1, cardType: -1, name: "面收", balance: 0 }],
+      basePayType: [{ id: 0, cardType: -1, name: "面收", balance: 0 }],
       userCardList: [],
       projectArr: [
         {
@@ -273,8 +300,8 @@ export default {
       ],
       type: "",
       addUserVisible: false,
-      submitProject: [],
       bgColorArr: ["#d9ecff", "#e1f3d8", "#faecd8", "#fde2e2", "#e9e9eb"],
+      loading: false,
     };
   },
   created() {
@@ -291,56 +318,95 @@ export default {
   },
   methods: {
     submit() {
-      this.btnLoading = true;
       this.$refs.form.validate((valid) => {
         if (valid) {
-          if (this.validProject()) {
-            if (this.submitProject.length == 0) {
-              this.$message.error("没有有效的项目");
-            } else {
-              this.loading = true;
-              // eslint-disable-next-line no-unused-vars
-              const { telephone, ...info } = this.form;
-              const param = {
-                ...info,
-                project: this.submitProject,
-              };
-              console.log(param);
-              this.$api
-                .post(
-                  this.type == "edit" ? "consume/edit" : "consume/add",
-                  param
-                )
-                .then((res) => {
-                  if (res.status == 1) {
-                    this.$notify.success({
-                      title: "成功",
-                      message:
-                        this.type == "edit"
-                          ? "消费登记表修改成功！"
-                          : "消费登记表提交成功！",
-                    });
-                    if (this.type == "edit") {
-                      this.cancelPage();
-                    } else {
-                      this.$router.replace("/");
-                    }
-                  }
-                })
-                .finally(() => {
-                  this.btnLoading = false;
-                  this.loading = false;
-                });
+          const submitProject = JSON.parse(
+            JSON.stringify(this.projectArr.filter((f) => f.project != ""))
+          );
+          for (let i = 0; i < submitProject.length; i++) {
+            submitProject[i].payArr = submitProject[i].payArr.filter(
+              (f) => f.pay != null
+            );
+            if (!submitProject[i].money) {
+              this.$message.error("存在有效项目没有输入金额");
+              return;
             }
+            if (submitProject[i].payArr.length == 0) {
+              this.$message.error("存在有效项目没有有效的支付方式");
+              return;
+            }
+            if (!submitProject[i].server) {
+              this.$message.error("存在有效项目没有选择服务人");
+              return;
+            }
+          }
+          if (submitProject.length == 0) {
+            this.$message.error("没有有效的项目");
           } else {
-            this.$message.error("部分项目金额与支付金额不相等");
+            this.loading = true;
+            // eslint-disable-next-line no-unused-vars
+            const { telephone, ...info } = this.form;
+            const param = {
+              ...info,
+              project: submitProject,
+            };
+            this.$api
+              .post(this.type == "edit" ? "consume/edit" : "consume/add", param)
+              .then((res) => {
+                if (res.status == 1) {
+                  this.$notify.success({
+                    title: "成功",
+                    message:
+                      this.type == "edit"
+                        ? "消费登记表修改成功！"
+                        : "消费登记表提交成功！",
+                  });
+                  if (this.type == "edit") {
+                    this.cancelPage();
+                  } else {
+                    this.$router.replace("/");
+                  }
+                }
+              })
+              .finally(() => {
+                this.loading = false;
+              });
           }
         } else {
           this.$message.error("请正确填写登记表信息后提交");
-          this.btnLoading = false;
           return false;
         }
       });
+    },
+    edit() {
+      this.loading = true;
+      const project = [];
+      this.projectArr.forEach((e) => {
+        project.push({
+          consumeProjectId: e.consumeProjectId,
+          serverId: e.server,
+        });
+      });
+      const params = {
+        id: this.form.id,
+        remark: this.form.remark,
+        date: this.form.date,
+        project,
+      };
+      this.$api
+        .post("consume/edit", params)
+        .then((res) => {
+          if (res.status == 1) {
+            this.$notify.success({
+              title: "成功",
+              message: "消费登记表修改成功！",
+            });
+            this.cancelPage();
+          }
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
     projectChange(projectItem) {
       if (projectItem.project) {
@@ -354,61 +420,72 @@ export default {
       } else {
         projectItem.payTypeList = [];
       }
-      console.log(projectItem.payTypeList);
-    },
-    validProject() {
-      let valid = true;
-      this.submitProject = [];
-      this.projectArr.forEach((project) => {
-        delete project.isError;
-        if (project.project) {
-          let payMoney = 0;
-          project.payArr.forEach((pay) => {
-            payMoney += Number(pay.money);
-          });
-          console.log(payMoney);
-          console.log(project.money);
-          if (Number(project.money) !== payMoney) {
-            valid = false;
-            project.isError = true;
-            this.$forceUpdate();
-          } else {
-            this.submitProject.push(project);
-          }
-        }
-      });
-      return valid;
-    },
-    cardTypeLabel(card) {
-      if (card.cardType == -1 || card.cardType == 5) {
-        //面收或赠送项目
-        return card.name;
-      } else if (
-        card.cardType == 1 ||
-        card.cardType == 2 ||
-        card.cardType == 3
-      ) {
-        return card.name + "(余额：" + card.balance + "元)";
-      } else if (card.cardType == 4) {
-        return card.name + "(剩余：" + card.balance + "次)";
-      } else {
-        ("");
+      if (!this.type) {
+        projectItem.payArr = [{ pay: null, money: null, realMoney: null }];
       }
     },
-    getInfo(id) {
-      this.loading = true;
+    cardTypeLabel(card) {
+      let nowDate = new Date();
+      let YY = nowDate.getFullYear() + "-";
+      let MM =
+        (nowDate.getMonth() + 1 < 10
+          ? "0" + (nowDate.getMonth() + 1)
+          : nowDate.getMonth() + 1) + "-";
+      let DD =
+        nowDate.getDate() < 10 ? "0" + nowDate.getDate() : nowDate.getDate();
+      const nowDateVal = YY + MM + DD;
+      if (this.type) {
+        return card.name;
+      } else {
+        if (card.expiryDate && nowDateVal > card.expiryDate) {
+          return card.name + " (已过期：" + card.expiryDate + ")";
+        } else {
+          if (card.cardType == -1 || card.cardType == 5) {
+            //面收或赠送项目
+            return card.name;
+          } else if (
+            card.cardType == 1 ||
+            card.cardType == 2 ||
+            card.cardType == 3
+          ) {
+            return card.name + " (余额：" + card.balance + "元)";
+          } else if (card.cardType == 4) {
+            return card.name + " (剩余：" + card.balance + "次)";
+          } else {
+            ("");
+          }
+        }
+      }
+    },
+    getCardPay() {
       this.$api
-        .post("card/recharge/one", { id })
+        .post("card/userCard", {
+          userId: this.form.user,
+          consumeId: this.form.id,
+        })
         .then((res) => {
           if (res.status == 1) {
-            this.form = res.data;
-            this.form.projectArr = [];
-            res.data.projectData.forEach((e) => {
-              this.form.projectArr.push({ projectId: e });
+            this.userCardList = this.basePayType.concat(res.data);
+            this.projectArr.forEach((e) => {
+              this.projectChange(e);
+              e.payArr.forEach((item) => {
+                item.pay = e.payTypeList.find((f) => f.id == item.payId);
+                this.payMoneyChange(item, e.project);
+              });
+              // e.pay = e.payTypeList.find(f => f.)
             });
+            this.$forceUpdate();
           }
-        })
-        .finally(() => (this.loading = false));
+        });
+    },
+    getInfo(id) {
+      this.$api.post("consume/consumeOne", { id }).then((res) => {
+        if (res.status == 1) {
+          this.form = res.data.info;
+          this.projectArr = res.data.projectArr;
+          this.getCardPay();
+        }
+      });
     },
     getUser() {
       this.$api.post("user/list").then((res) => {
@@ -474,17 +551,21 @@ export default {
       item.money = null;
       item.realMoney = null;
     },
-    payMoneyChange(item) {
+    payMoneyChange(item, projectId) {
       if (
         item.money &&
         item.pay &&
         (item.pay.cardType == 2 || item.pay.cardType == 3)
       ) {
         let discount = 1;
-        if (item.pay.cardType == 2) {
+        const isDiscount =
+          this.projectList.find((f) => f.id == projectId).type == 0
+            ? true
+            : false;
+        if (item.pay.cardType == 2 && isDiscount) {
           discount = item.pay.params[0];
         }
-        if (item.pay.cardType == 3) {
+        if (item.pay.cardType == 3 && isDiscount) {
           discount = item.pay.params[2];
         }
         item.realMoney = parseInt(item.money * discount);
@@ -566,8 +647,8 @@ export default {
   .image-upload {
     text-align: left;
   }
-  .btn-cancel {
-    margin-left: 40px;
+  .btn-submit {
+    margin-right: 40px;
   }
 }
 .el-select {
@@ -597,5 +678,13 @@ export default {
 }
 .project-title {
   padding-bottom: 5px;
+}
+.pay-type {
+  position: relative;
+  .pay-expiry {
+    position: absolute;
+    right: 0;
+    top: 30px;
+  }
 }
 </style>
